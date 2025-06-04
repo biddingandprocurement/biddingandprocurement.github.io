@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>读取 XLSX 和 CSV 并用 Danfo 分析</title>
+  <script src="xlsx.full.min.js"></script>
+  <script src="danfo.js"></script>
+</head>
+<body>
+  <h3>上传 XLSX 文件</h3>
+  <input type="file" id="xlsxInput" accept=".xlsx" />
+
+  <h3>上传 CSV 文件</h3>
+  <input type="file" id="csvInput" accept=".csv" />
+  
+  <br><br>
+  <button onclick="mergeAndDisplay()">🔄 合并两个表格</button>
+
+  <h3>状态日志</h3>
+  <pre id="statusLog"></pre>
+
+  <h3>原始表预览</h3>
+  <pre id="previewData"></pre>
+
+  <h3>合并结果预览</h3>
+  <pre id="mergeResult"></pre>
+
+  <script>
+    let dfXlsx, dfCsv;
+
+    function log(msg) {
+      document.getElementById("statusLog").textContent += msg + "\n";
+    }
+
+    // 处理 XLSX 文件
+    document.getElementById("xlsxInput").addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+        dfXlsx = new dfd.DataFrame(json);
+        log(`✅ XLSX 文件已加载：${dfXlsx.shape[0]} 行`);
+        displayData();
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    // 使用 danfo 原生 readCSV
+    document.getElementById("csvInput").addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      dfd.readCSV(file).then(df => {
+        dfCsv = df;
+        log(`✅ CSV 文件已加载：${dfCsv.shape[0]} 行`);
+        displayData();
+      }).catch(err => {
+        log("❌ CSV 加载失败：" + err);
+      });
+    });
+
+    // 显示原始数据预览
+    function displayData() {
+      let out = "";
+      if (dfXlsx) {
+        out += "📘 XLSX 预览:\n" + dfXlsx.head(5).toString() + "\n\n";
+      }
+      if (dfCsv) {
+        out += "📙 CSV 预览:\n" + dfCsv.head(5).toString();
+      }
+      document.getElementById("previewData").textContent = out;
+    }
+
+
+    // function displayData() {
+    //     let out = "";
+
+    //     if (dfXlsx) {
+    //         const colsXlsx = dfXlsx.columns.map(col => JSON.stringify(col)).join(", ");
+    //         out += "📘 XLSX 预览:\n" + dfXlsx.head(5).toString() + "\n\n";
+    //         out += "📘 XLSX 列名: [" + colsXlsx + "]\n\n";
+    //     }
+
+    //     if (dfCsv) {
+    //         const colsCsv = dfCsv.columns.map(col => JSON.stringify(col)).join(", ");
+    //         out += "📙 CSV 预览:\n" + dfCsv.head(5).toString() + "\n\n";
+    //         out += "📙 CSV 列名: [" + colsCsv + "]\n";
+    //     }
+
+    //     document.getElementById("previewData").textContent = out;
+    // }
+
+    
+    // 合并逻辑
+    function mergeAndDisplay() {
+      if (!dfXlsx || !dfCsv) {
+        alert("请先上传 XLSX 和 CSV 文件");
+        return;
+      }
+
+      const key = "供应商名称";
+
+      const uniqueXlsx = new Set(dfXlsx[key].values).size;
+      const uniqueCsv = new Set(dfCsv[key].values).size;
+
+      if (dfXlsx.shape[0] !== uniqueXlsx || dfCsv.shape[0] !== uniqueCsv) {
+        alert("❗‘供应商名称’列在某个表中不是唯一，无法一一对应");
+        return;
+      }
+
+      const dfMerged = dfd.merge({
+        left: dfXlsx,
+        right: dfCsv,
+        on: key,
+        how: "left"
+      });
+
+      window.dfMerged = dfMerged;
+
+      const previewText = dfMerged.head(10).toString();
+      document.getElementById("mergeResult").textContent = "✅ 合并成功预览：\n\n" + previewText;
+      log("✅ 合并完成，共 " + dfMerged.shape[0] + " 行");
+    }
+  </script>
+</body>
+</html>
