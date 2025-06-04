@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>读取 XLSX 和 CSV 并用 Danfo 分析</title>
-  <script src="xlsx.full.min.js"></script>
-  <script src="danfo.js"></script>
+  <title>Encryption</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/danfojs@1.2.0/lib/bundle.min.js"></script>
+
+  <!-- <script src="xlsx.full.min.js"></script>
+  <script src="danfo.js"></script> -->
 </head>
 <body>
   <h3>上传 XLSX 文件</h3>
@@ -25,8 +28,11 @@
   <h3>合并结果预览</h3>
   <pre id="mergeResult"></pre>
 
+  <button onclick="downloadCSV()">📥 下载为 CSV</button>
+  <button onclick="downloadXLSX()">📥 下载为 Excel</button>
+
   <script>
-    let dfXlsx, dfCsv;
+    let dfXlsx, dfCsv, dfMerged, dfMerge_download
 
     function log(msg) {
       document.getElementById("statusLog").textContent += msg + "\n";
@@ -73,25 +79,6 @@
       document.getElementById("previewData").textContent = out;
     }
 
-
-    // function displayData() {
-    //     let out = "";
-
-    //     if (dfXlsx) {
-    //         const colsXlsx = dfXlsx.columns.map(col => JSON.stringify(col)).join(", ");
-    //         out += "📘 XLSX 预览:\n" + dfXlsx.head(5).toString() + "\n\n";
-    //         out += "📘 XLSX 列名: [" + colsXlsx + "]\n\n";
-    //     }
-
-    //     if (dfCsv) {
-    //         const colsCsv = dfCsv.columns.map(col => JSON.stringify(col)).join(", ");
-    //         out += "📙 CSV 预览:\n" + dfCsv.head(5).toString() + "\n\n";
-    //         out += "📙 CSV 列名: [" + colsCsv + "]\n";
-    //     }
-
-    //     document.getElementById("previewData").textContent = out;
-    // }
-
     
     // 合并逻辑
     function mergeAndDisplay() {
@@ -105,23 +92,87 @@
       const uniqueXlsx = new Set(dfXlsx[key].values).size;
       const uniqueCsv = new Set(dfCsv[key].values).size;
 
+      console.log(dfXlsx[key].values)
+      console.log(dfCsv[key].values)
+      console.log(dfXlsx)
+      console.log(dfCsv)
       if (dfXlsx.shape[0] !== uniqueXlsx || dfCsv.shape[0] !== uniqueCsv) {
         alert("❗‘供应商名称’列在某个表中不是唯一，无法一一对应");
         return;
       }
 
-      const dfMerged = dfd.merge({
+      dfMerged = dfd.merge({
         left: dfXlsx,
         right: dfCsv,
-        on: key,
+        on: [key],
         how: "left"
       });
+      generateEncriptionCode() // 生成"金额（X）"
+      console.log(dfMerged)
 
-      window.dfMerged = dfMerged;
-
+      // 更新预览
       const previewText = dfMerged.head(10).toString();
       document.getElementById("mergeResult").textContent = "✅ 合并成功预览：\n\n" + previewText;
       log("✅ 合并完成，共 " + dfMerged.shape[0] + " 行");
+      
+
+    }
+
+
+    function generateEncriptionCode() {
+      // 生成"金额（X）"
+      const values1 = dfMerged["金额（元）"].values;
+      const values2 = dfMerged["校验码"].values;
+
+      const result = values1.map((val, i) => {
+        const a = parseFloat(val);
+        const b = parseFloat(values2[i]);
+        return (isNaN(a) || isNaN(b)) ? null : a * b;
+      });
+
+      dfMerged.addColumn("金额（X）", result, { inplace: true });
+    }
+
+
+
+    function downloadCSV() {
+      dfMerge_download = dfMerged.loc({ columns: ["序号", "供应商编码", "供应商名称", "金额（X）", "备注"] });
+      if (!dfMerge_download) {
+        alert("请先执行合并操作");
+        return;
+      }
+
+      dfMerge_download.toCSV().then(csvString => {
+        const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "合并结果.csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      });
+    }
+
+    function downloadXLSX() {
+      dfMerge_download = dfMerged.loc({ columns: ["序号", "供应商编码", "供应商名称", "金额（X）", "备注"] });
+      if (!dfMerge_download) {
+        alert("请先执行合并操作");
+        return;
+      }
+
+      const ws = XLSX.utils.json_to_sheet(dfMerge_download.values.map((row, i) => {
+        const obj = {};
+        dfMerge_download.columns.forEach((col, j) => {
+          obj[col] = row[j];
+        });
+        return obj;
+      }));
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "合并结果");
+
+      XLSX.writeFile(wb, "合并结果.xlsx");
     }
   </script>
 </body>
