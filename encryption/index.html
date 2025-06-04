@@ -141,17 +141,18 @@
         alert("请先执行合并操作");
         return;
       }
-
-      dfMerge_download.toCSV().then(csvString => {
-        const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "合并结果.csv";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      });
+      // dfd.toCSV(dfMerge_download, { filePath: "D:\\Gackage\\biddingandprocurement.github.io\\encryption\\合并结果.csv"})
+      dfd.toCSV(dfMerge_download, { fileName: "合并结果.csv", download: true})
+      // dfd.toCSV(dfMerge_download).then(csv => {
+      //   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      //   const url = URL.createObjectURL(blob);
+      //   const a = document.createElement("a");
+      //   a.href = url;
+      //   a.download = "合并结果.csv";
+      //   document.body.appendChild(a);
+      //   a.click();
+      //   document.body.removeChild(a);
+      // });
     }
 
     function downloadXLSX() {
