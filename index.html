@@ -1,34 +1,168 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>读取 CSV 文件并转换为字典</title>
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            margin-bottom: 10px;
+        }
+        input[type="text"], input[type="number"] {
+            width: 300px;
+            padding: 5px;
+        }
+        #result {
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #aaa;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #eee;
+        }
+    </style>
 </head>
 <body>
-  <h2>上传 CSV 文件</h2>
-  <input type="file" id="csvFile" accept=".csv" />
-  <pre id="output"></pre>
 
-  <script>
-    document.getElementById('csvFile').addEventListener('change', function (e) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
+    <h2>入库汇总表</h2>
 
-      reader.onload = function (e) {
-        const text = e.target.result;
-        const lines = text.trim().split('\n');
-        const headers = lines[0].split(',');
+    <div>
+        <label for="fileInput">选择CSV文件：</label>
+        <input type="file" id="fileInput" accept=".csv">
+    </div>
 
-        const result = lines.slice(1).map(line => {
-          const values = line.split(',');
-          return Object.fromEntries(values.map((val, i) => [headers[i], val]));
+    <div>
+        <label for="vendorName">供应商名称：</label>
+        <input type="text" id="vendorName">
+    </div>
+
+    <div>
+        <label for="checkCode">校验码：</label>
+        <input type="number" id="checkCode">
+    </div>
+
+    <div>
+        <button id="calculateBtn">获取信息</button>
+    </div>
+
+    <div id="result"></div>
+
+    <script>
+        let csvData = [];
+
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                alert('请先选择一个CSV文件。');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseCSV(text);
+            };
+            reader.readAsText(file);
         });
 
-        document.getElementById('output').textContent = JSON.stringify(result, null, 2);
-      };
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            const headers = lines[0].split(',');
 
-      reader.readAsText(file);
-    });
-  </script>
+            csvData = lines.slice(1).map(line => {
+                const values = line.split(',');
+                let obj = {};
+                headers.forEach((header, index) => {
+                    obj[header.trim()] = values[index] ? values[index].trim() : '';
+                });
+                return obj;
+            });
+
+            alert('CSV文件已成功加载。');
+        }
+
+        document.getElementById('calculateBtn').addEventListener('click', function() {
+            const vendorName = document.getElementById('vendorName').value.trim();
+            const checkCode = parseFloat(document.getElementById('checkCode').value.trim());
+
+            if (!vendorName) {
+                alert('请输入供应商名称。');
+                return;
+            }
+
+            if (isNaN(checkCode) || checkCode === 0) {
+                alert('请输入有效的校验码（非零数字）。');
+                return;
+            }
+
+            if (csvData.length === 0) {
+                alert('请先加载CSV文件。');
+                return;
+            }
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+
+            const matched = csvData.find(row => row['供应商名称'] === vendorName);
+
+            if (!matched) {
+                resultDiv.innerHTML = `<p style="color:red;">供应商名称有误，未找到匹配项。</p>`;
+                return;
+            }
+
+            let amountX = matched['金额（X）'];
+            amountX = amountX.replace(/,/g, ''); // 去除千位分隔符
+            let amount = parseFloat(amountX);
+
+            if (isNaN(amount)) {
+                resultDiv.innerHTML = `<p style="color:red;">金额（X）格式有误，无法解析。</p>`;
+                return;
+            }
+
+            const amountYuan = amount / checkCode;
+
+            // 显示结果
+            const tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>供应商编码</th>
+                            <th>供应商名称</th>
+                            <th>金额（元）</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>${matched['序号']}</td>
+                            <td>${matched['供应商编码']}</td>
+                            <td>${matched['供应商名称']}</td>
+                            <td>${amountYuan.toFixed(2)}</td>
+                            <td>${matched['备注'] || ''}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+
+            resultDiv.innerHTML = tableHTML;
+        });
+    </script>
+
 </body>
 </html>
