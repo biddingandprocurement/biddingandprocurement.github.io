@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>入库汇总表</title>
+    <title></title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -42,6 +42,11 @@
     <h2>入库汇总表</h2>
 
     <div>
+        <label for="fileInput">选择CSV文件：</label>
+        <input type="file" id="fileInput" accept=".csv">
+    </div>
+
+    <div>
         <label for="vendorName">供应商名称：</label>
         <input type="text" id="vendorName">
     </div>
@@ -60,15 +65,19 @@
     <script>
         let csvData = [];
 
-        // 1. 页面加载时自动读取合并结果.csv
-        window.addEventListener('DOMContentLoaded', () => {
-            fetch('https://biddingandprocurement.github.io/合并结果.csv')
-                .then(response => {
-                    if (!response.ok) throw new Error('无法加载合并结果.csv');
-                    return response.text();
-                })
-                .then(text => parseCSV(text))
-                .catch(error => alert('加载CSV失败: ' + error.message));
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                alert('请先选择一个CSV文件。');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseCSV(text);
+            };
+            reader.readAsText(file);
         });
 
         function parseCSV(text) {
@@ -84,7 +93,7 @@
                 return obj;
             });
 
-            console.log('已加载，共 ' + csvData.length + ' 条记录');
+            alert('CSV文件已成功加载。');
         }
 
         document.getElementById('calculateBtn').addEventListener('click', function() {
@@ -102,7 +111,7 @@
             }
 
             if (csvData.length === 0) {
-                alert('CSV文件尚未加载完成，请稍后重试。');
+                alert('请先加载CSV文件。');
                 return;
             }
 
@@ -117,7 +126,7 @@
             }
 
             let amountX = matched['金额（X）'];
-            amountX = amountX.replace(/,/g, '');
+            amountX = amountX.replace(/,/g, ''); // 去除千位分隔符
             let amount = parseFloat(amountX);
 
             if (isNaN(amount)) {
@@ -127,6 +136,7 @@
 
             const amountYuan = amount / checkCode;
 
+            // 显示结果
             const tableHTML = `
                 <table>
                     <thead>
@@ -148,7 +158,6 @@
                         </tr>
                     </tbody>
                 </table>
-                <p style="margin-top: 10px;">请再次核对输入的校验码：<strong>${checkCode}</strong></p>
             `;
 
             resultDiv.innerHTML = tableHTML;
