@@ -62,7 +62,7 @@
 
         // 1. 页面加载时自动读取合并结果.csv
         window.addEventListener('DOMContentLoaded', () => {
-            fetch('https://biddingandprocurement.github.io/合并结果.csv')
+            fetch('https://biddingandprocurement.github.io/warehouse/合并结果.csv')
                 .then(response => {
                     if (!response.ok) throw new Error('无法加载合并结果.csv');
                     return response.text();
