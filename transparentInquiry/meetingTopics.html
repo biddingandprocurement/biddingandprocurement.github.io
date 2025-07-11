@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>限高价复核 议题</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <style>
+    body        { padding: 2rem; max-width: 960px; margin:auto; }
+    #exportArea { background:#f8f9fa; padding:1.5rem; margin-top:2rem; }
+
+    /* Word 导出需要的黑框表样式（备用） */
+    .word-table           { border-collapse:collapse; width:100%; }
+    .word-table th,
+    .word-table td        { border:1px solid #000; padding:6px; text-align:center; }
+  </style>
+</head>
+
+<body>
+  <h1 class="mb-4">限高价复核 议题</h1>
+
+  <!-- ====== 1. 输入表单 ====== -->
+  <form id="dataForm" class="vstack gap-3">
+
+    <div class="row g-3">
+      <div class="col-sm-3">
+        <label for="hospital" class="form-label">申购院区</label>
+        <select id="hospital" name="hospital" class="form-select" required>
+          <option value="" disabled selected>请选择院区</option>
+          <option value="昆州">昆州</option>
+          <option value="自贸">自贸</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-sm-3"><label class="form-label">申购科室</label><input name="department" class="form-control" required></div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-sm-3"><label class="form-label">设备名称</label><input name="equipment" class="form-control" required></div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-sm-3"><label class="form-label">阳光问采日期</label><input name="date" type="date" class="form-control" required></div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-sm-2"><label class="form-label">单价(万元)</label><input name="unit_price" type="number" step="0.01" class="form-control" required></div>
+      <div class="col-sm-2"><label class="form-label">单位</label><input name="subject_unit" class="form-control" required></div>
+      <div class="col-sm-2"><label class="form-label">数量(单位)</label><input name="quantity" type="number" class="form-control" required></div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="d-flex gap-3 mt-4">
+      <button type="button" id="btnPreview"  class="btn btn-primary flex-grow-1">预览</button>
+      <button type="button" id="btnDownload" class="btn btn-success flex-grow-1" disabled>下载 Word</button>
+    </div>
+  </form>
+
+  <!-- ====== 2. 预览区域 ====== -->
+  <div id="exportArea" class="d-none"></div>
+
+  <!-- ====== 依赖库 ====== -->
+  <script src="https://cdn.jsdelivr.net/npm/html-docx-js-version-updated@0.4.0/dist/html-docx.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+  <script>
+    /* -------------------- 数据收集 & 校验 -------------------- */
+    function collectData () {
+      const form = document.getElementById('dataForm');
+      if (!form.reportValidity()) return null;        // 原生必填校验
+
+      const obj = Object.fromEntries(new FormData(form));
+      obj.unit_price  = parseFloat(obj.unit_price);
+      obj.quantity    = parseFloat(obj.quantity);
+      obj.total_price = (obj.unit_price * obj.quantity).toFixed(2);
+
+      return obj;
+    }
+
+    /* -------------------- 构造 HTML -------------------- */
+    function buildHTML (d) {
+      const zhDate = d.date.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$1年$2月$3日');
+
+      return `
+        <h2 style="text-align:center;">关于招采${d.hospital}院区${d.department}${d.equipment}项目的请示</h2>
+
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;招标采购办公室收到资产管理部转办的${d.hospital}院区${d.department}${d.equipment}采购需求书（详见附件1），该项目已通过资产管理委员会论证，已报入年度预算。</p>
+
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;资产管理部与重症医学科共同完成了需求调查及价格调研工作，招标采购办公室于${zhDate}对项目材料开展详细复核，结合资产管理部的预算调研，在完成复核最高限价（详见附件2）后认为该项目达到招采条件，建议按照资产管理部调研的最高限价：${d.unit_price} 万元/${d.subject_unit}，${d.quantity}${d.subject_unit}，共计：${d.total_price} 万元进行采购。建议通过院内评审方式进行采购，从2025年医学装备类年度预算中支出。</p>
+
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;妥否，提请领导审议！</p>
+      `;
+    }
+
+    /* -------------------- 预览按钮 -------------------- */
+    let lastHtml = ''; // 记录最近一次预览结果
+
+    document.getElementById('btnPreview').addEventListener('click', () => {
+      const data = collectData();
+      if (!data) return;
+
+      lastHtml = buildHTML(data);
+      const exportArea = document.getElementById('exportArea');
+      exportArea.innerHTML = lastHtml;
+      exportArea.classList.remove('d-none');
+      document.getElementById('btnDownload').disabled = false;
+    });
+
+    /* 表单一有变动立即禁用下载，避免导出旧内容 */
+    document.getElementById('dataForm').addEventListener('input', () => {
+      document.getElementById('btnDownload').disabled = true;
+    });
+
+    /* -------------------- 下载按钮 -------------------- */
+    document.getElementById('btnDownload').addEventListener('click', () => {
+      if (!lastHtml) return;
+
+      const fullHtml = `
+        <!DOCTYPE html>
+        <html><head><meta charset="utf-8">
+          <style>${document.querySelector('style').textContent}</style>
+        </head><body>${lastHtml}</body></html>
+      `;
+
+      const blob = window.htmlDocx.asBlob(fullHtml);
+      saveAs(blob, '限高价复核情况表.docx');
+    });
+  </script>
+</body>
+</html>
