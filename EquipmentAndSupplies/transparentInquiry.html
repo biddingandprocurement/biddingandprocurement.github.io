@@ -20,11 +20,10 @@
 
     <div class="row g-3">
       <div class="col-sm-3">
-        <label class="form-label">流水号</label>
+        <label class="form-label">资产管理部申购流水号</label>
         <input name="serialNumber" class="form-control" required>
       </div>
     </div>
-
 
     <div class="row g-3">
       <div class="col-sm-3">
@@ -49,21 +48,27 @@
 
     <div class="row g-3">
       <div class="col-sm-3">
-        <label class="form-label">设备名称</label>
-        <input name="equipment" class="form-control" required>
+        <label class="form-label">采购项目</label>
+        <input name="procurementItem" class="form-control" required>
       </div>
       <div class="col-sm-2">
         <label class="form-label">单价(万元)</label>
         <input name="unit_price" type="number" step="any" class="form-control" required>
       </div>
       <div class="col-sm-2">
-        <label class="form-label">单位</label>
-        <input name="subject_unit" class="form-control" required>
-      </div>
-      <div class="col-sm-2">
         <label class="form-label">数量(单位)</label>
         <input name="quantity" type="number" class="form-control" required>
       </div>
+      <div class="col-sm-2">
+        <label class="form-label">单位</label>
+        <input name="subject_unit" class="form-control" required>
+      </div>
+      <!-- 
+      <div class="col-sm-2">
+        <label class="form-label">质保期（年）</label>
+        <input name="warrantyPeriod" type="number" class="form-control" required>
+      </div> 
+      -->
     </div>
 
 
@@ -202,11 +207,12 @@
 
       return `
         <h2 style="text-align:center;">限高价复核情况表</h2>
-        <p>流水号：${d.serialNumber}</p>
-        <p>申购院区：${d.hospital}</p>
-        <p>申购科室：${d.department}</p>
-        <p>设备名称：${d.equipment}</p>
+        <p>一、资产管理部申购流水号：${d.serialNumber}</p>
+        <p>二、申购院区：${d.hospital}</p>
+        <p>三、申购科室：${d.department}</p>
+        <p>四、采购项目：${d.procurementItem}</p>
         <p>资产管理部建议最高限价：${d.unit_price_show} 万元/${d.subject_unit}，${d.quantity}${d.subject_unit}，共计：${d.total_price} 万元</p>
+        <p>五、招标采购办公室复核情况：</p>
 
         <table class="word-table">
           <thead>
@@ -222,7 +228,7 @@
           <tbody>${rows}</tbody>
         </table>
 
-        <p style="margin-top:1rem;">招标采购办公室意见：经调研该项目市场成交价对比使用部门及资产管理部价格调研情况，建议资产管理部调研结果采购。</p>
+        <p style="margin-top:1rem;">招标采购办公室意见：经调研该项目市场成交价对比使用部门及资产管理部价格调研情况，建议以资产管理部调研结果采购。</p>
 
         <p style="margin-top:1.5rem;">复核人：${d.reviewer}</p>
         <p>时间：${d.date_show}</p>
