@@ -18,7 +18,14 @@
   <!-- ====== 1. 输入表单 ====== -->
   <form id="dataForm" class="vstack gap-3">
 
-    
+    <div class="row g-3">
+      <div class="col-sm-3">
+        <label class="form-label">流水号</label>
+        <input name="serialNumber" class="form-control" required>
+      </div>
+    </div>
+
+
     <div class="row g-3">
       <div class="col-sm-3">
         <label for="hospital" class="form-label">申购院区</label>
@@ -26,11 +33,13 @@
           <option value="" disabled selected>请选择院区</option>
           <option value="昆州院区">昆州院区</option>
           <option value="自贸院区">自贸院区</option>
+          <option value="昆州与自贸院区">昆州与自贸院区</option>
         </select>
       </div>
     </div>
 
     
+
     <div class="row g-3">
       <div class="col-sm-3">
         <label class="form-label">申购科室</label>
@@ -193,10 +202,11 @@
 
       return `
         <h2 style="text-align:center;">限高价复核情况表</h2>
+        <p>流水号：${d.serialNumber}</p>
         <p>申购院区：${d.hospital}</p>
         <p>申购科室：${d.department}</p>
         <p>设备名称：${d.equipment}</p>
-        <p>资产管理部建议最高限价：${d.unit_price_show} 万元/${d.subject_unit}，${d.quantity}${d.subject_unit}共计：${d.total_price} 万元</p>
+        <p>资产管理部建议最高限价：${d.unit_price_show} 万元/${d.subject_unit}，${d.quantity}${d.subject_unit}，共计：${d.total_price} 万元</p>
 
         <table class="word-table">
           <thead>
