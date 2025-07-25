@@ -8,7 +8,8 @@
     body          { padding: 2rem; max-width: 960px; margin:auto; }
     #exportArea   { background:#f8f9fa; padding:1.5rem; margin-top:2rem; }
     .word-table   { border-collapse:collapse; width:100%; }
-    .word-table th, .word-table td { border:1px solid #000; padding:6px; text-align:center; }
+    .word-table th,
+    .word-table td{ border:1px solid #000; padding:6px; text-align:center; }
   </style>
 </head>
 <body>
@@ -16,19 +17,55 @@
 
   <!-- ====== 1. 输入表单 ====== -->
   <form id="dataForm" class="vstack gap-3">
+
+    
     <div class="row g-3">
-      <div class="col-sm-3"><label class="form-label">申购科室</label><input name="department" class="form-control" required></div>
+      <div class="col-sm-3">
+        <label for="hospital" class="form-label">申购院区</label>
+        <select id="hospital" name="hospital" class="form-select" required>
+          <option value="" disabled selected>请选择院区</option>
+          <option value="昆州院区">昆州院区</option>
+          <option value="自贸院区">自贸院区</option>
+        </select>
+      </div>
     </div>
+
+    
     <div class="row g-3">
-      <div class="col-sm-3"><label class="form-label">设备名称</label><input name="equipment" class="form-control" required></div>
-      <div class="col-sm-2"><label class="form-label">单价(万元)</label><input name="unit_price" type="number" step="any" class="form-control" required></div>
-      <div class="col-sm-2"><label class="form-label">单位</label><input name="subject_unit" class="form-control" required></div>
-      <div class="col-sm-2"><label class="form-label">数量(单位)</label><input name="quantity" type="number" class="form-control" required></div>
+      <div class="col-sm-3">
+        <label class="form-label">申购科室</label>
+        <input name="department" class="form-control" required>
+      </div>
     </div>
 
     <div class="row g-3">
-      <div class="col-sm-2"><label class="form-label">复核人</label><input name="reviewer" class="form-control" required></div>
-      <div class="col-sm-3"><label class="form-label">复核日期</label><input name="date" type="date" class="form-control" required></div>
+      <div class="col-sm-3">
+        <label class="form-label">设备名称</label>
+        <input name="equipment" class="form-control" required>
+      </div>
+      <div class="col-sm-2">
+        <label class="form-label">单价(万元)</label>
+        <input name="unit_price" type="number" step="any" class="form-control" required>
+      </div>
+      <div class="col-sm-2">
+        <label class="form-label">单位</label>
+        <input name="subject_unit" class="form-control" required>
+      </div>
+      <div class="col-sm-2">
+        <label class="form-label">数量(单位)</label>
+        <input name="quantity" type="number" class="form-control" required>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-sm-2">
+        <label class="form-label">复核人</label>
+        <input name="reviewer" class="form-control" required>
+      </div>
+      <div class="col-sm-3">
+        <label class="form-label">复核日期</label>
+        <input name="date" type="date" class="form-control" required>
+      </div>
     </div>
 
     <!-- 动态表格 -->
@@ -66,10 +103,25 @@
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
   <script>
-    /* -------------------- 动态增删行 -------------------- */
+    /* ===== 公共工具 ===== */
+    // const stripNumber = v => (isNaN(v) || v === '' ? v : Number(v).toString());
+    const numStr = v => {
+      if (v === '' || v == null || isNaN(v)) return v;      // 保留非数字 / 空值
+      // 用字符串算出“整数部分 + 小数部分（如有）”
+      const s = String(v);
+      if (!s.includes('.')) return s;                       // 整数直接返回
+      return s.replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1');     // 去掉尾部 0
+    };
+    const formatDate  = iso => {
+      const [y,m,d] = iso.split('-');
+      return `${y}年${Number(m)}月${Number(d)}日`;
+    };
+
+    /* ===== 动态增删行 ===== */
     const tbody = document.querySelector('#itemsTable tbody');
     document.getElementById('btnAdd').onclick = () => addRow();
-    addRow(); // 默认一行
+    addRow();                                // 默认一行
+
     function addRow(data = {}) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -84,63 +136,59 @@
       tbody.appendChild(tr);
     }
 
-    /* -------------------- 数据收集 & 校验 -------------------- */
+    /* ===== 数据收集与校验 ===== */
     function collectData() {
       const form = document.getElementById('dataForm');
-      if (!form.reportValidity()) return null;      // 浏览器原生必填校验
+      if (!form.reportValidity()) return null;  // 原生校验
 
-      // 行级校验
       let error = false;
       const items = [];
       [...tbody.querySelectorAll('tr')].forEach(tr => {
-        const inputs = [...tr.querySelectorAll('input')];
-        const allEmpty  = inputs.every(i => !i.value.trim());
-        const someEmpty = inputs.some(i => !i.value.trim());
+        const inputs   = [...tr.querySelectorAll('input')];
+        const allEmpty = inputs.every(i => !i.value.trim());
+        const someEmpty= inputs.some(i => !i.value.trim());
         tr.classList.remove('table-danger');
 
-        if (allEmpty) {
-          tr.remove();               // 删掉空行
-          return;
-        }
-        if (someEmpty) {
-          error = true;              // 半空行 => 报错
-          tr.classList.add('table-danger');
-          return;
-        }
+        if (allEmpty) { tr.remove(); return; }
+        if (someEmpty){ error = true; tr.classList.add('table-danger'); return; }
+
         const [info_source, purchase_dept, purchase_date, purchase_price, model, notes] =
               inputs.map(i => i.value.trim());
         items.push({ info_source, purchase_dept, purchase_date, purchase_price, model, notes });
       });
 
-      if (error) {
-        alert('⚠️  红色行尚未填写完整，请补全！');
-        return null;
-      }
+      if (error) { alert('⚠️  红色行尚未填写完整，请补全！'); return null; }
 
       const fd  = new FormData(form);
       const obj = Object.fromEntries(fd);
-      obj.total_price = (Number(obj.unit_price) * Number(obj.quantity || 0)).toFixed(2);
-      obj.items = items;
+
+      const totalRaw = Number(obj.unit_price) * Number(obj.quantity || 0);
+      obj.total_price     = numStr(totalRaw);
+      obj.items           = items;
+      obj.unit_price_show = numStr(obj.unit_price);
+      obj.date_show       = formatDate(obj.date);
+
       return obj;
     }
 
-    /* -------------------- 构造 HTML -------------------- */
+    /* ===== 构造导出 HTML ===== */
     function buildHTML(d) {
       const rows = d.items.map(r => `
         <tr>
           <td>${r.info_source}</td>
           <td>${r.purchase_dept}</td>
           <td>${r.purchase_date}</td>
-          <td>${r.purchase_price}</td>
+          <td>${numStr(r.purchase_price)}</td>
           <td>${r.model}</td>
           <td>${r.notes}</td>
         </tr>`).join('');
 
       return `
         <h2 style="text-align:center;">限高价复核情况表</h2>
+        <p>申购院区：${d.hospital}</p>
         <p>申购科室：${d.department}</p>
         <p>设备名称：${d.equipment}</p>
-        <p>资产管理部建议最高限价：${d.unit_price} 万元/${d.subject_unit}，${d.quantity}${d.subject_unit}共计：${d.total_price} 万元</p>
+        <p>资产管理部建议最高限价：${d.unit_price_show} 万元/${d.subject_unit}，${d.quantity}${d.subject_unit}共计：${d.total_price} 万元</p>
 
         <table class="word-table">
           <thead>
@@ -159,12 +207,12 @@
         <p style="margin-top:1rem;">招标采购办公室意见：经调研该项目市场成交价对比使用部门及资产管理部价格调研情况，建议资产管理部调研结果采购。</p>
 
         <p style="margin-top:1.5rem;">复核人：${d.reviewer}</p>
-        <p>时间：${d.date.replace(/-/g,' 年 ').replace(/$/, ' 日')}</p>
+        <p>时间：${d.date_show}</p>
       `;
     }
 
-    /* -------------------- 预览按钮 -------------------- */
-    let lastHtml = '';           // 记录最近一次预览
+    /* ===== 预览 ===== */
+    let lastHtml = '';
     document.getElementById('btnPreview').onclick = () => {
       const data = collectData();
       if (!data) return;
@@ -176,12 +224,12 @@
       document.getElementById('btnDownload').disabled = false;
     };
 
-    /* 若用户又修改了表单，立即禁用下载按钮，避免导出旧内容 */
+    /* 表单改动 ⇒ 禁用下载 */
     document.getElementById('dataForm').addEventListener('input', () => {
       document.getElementById('btnDownload').disabled = true;
     });
 
-    /* -------------------- 下载按钮 -------------------- */
+    /* ===== 下载 Word ===== */
     document.getElementById('btnDownload').onclick = () => {
       if (!lastHtml) return;
       const fullHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${
