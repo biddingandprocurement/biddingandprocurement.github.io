@@ -10,6 +10,8 @@
     .word-table   { border-collapse:collapse; width:100%; }
     .word-table th,
     .word-table td{ border:1px solid #000; padding:6px; text-align:center; }
+
+
   </style>
 </head>
 <body>
@@ -152,7 +154,7 @@
         <td><input type="month" class="form-control" required value="${data.purchase_date || ''}"></td>
         <td><input type="number" step="any" class="form-control" required value="${data.purchase_price || ''}"></td>
         <td><input class="form-control" required value="${data.model || ''}"></td>
-        <td><input class="form-control" required value="${data.notes || ''}"></td>
+        <td><input class="form-control" value="${data.notes || ''}"></td>
         <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger">✖</button></td>`;
       tr.querySelector('button').onclick = () => tr.remove();
       tbody.appendChild(tr);
@@ -161,28 +163,85 @@
     /* ===== 数据收集与校验 ===== */
     function collectData() {
       const form = document.getElementById('dataForm');
-      if (!form.reportValidity()) return null;  // 原生校验
+      const fd = new FormData(form);
+      const obj = Object.fromEntries(fd);
 
-      let error = false;
+      const requiredFields = {
+        'serialNumber': '资产管理部申购流水号',
+        'hospital': '申购院区',
+        'department': '申购科室',
+        'procurementItem': '采购项目',
+        'unit_price': '单价',
+        'quantity': '数量',
+        'subject_unit': '单位',
+        'reviewer': '复核人',
+        'date': '复核日期'
+      };
+
+      let hasMissing = false;
+      for (const [key] of Object.entries(requiredFields)) {
+        const input = form.querySelector(`[name="${key}"]`);
+        const value = obj[key]?.trim();
+        if (!value) {
+          input.classList.add('is-invalid');
+          hasMissing = true;
+        } else {
+          input.classList.remove('is-invalid');
+        }
+      }
+
+      // if (hasMissing) return null;
+
+      // 表格校验
       const items = [];
-      [...tbody.querySelectorAll('tr')].forEach(tr => {
-        const inputs   = [...tr.querySelectorAll('input')];
-        const allEmpty = inputs.every(i => !i.value.trim());
-        const someEmpty= inputs.some(i => !i.value.trim());
-        tr.classList.remove('table-danger');
+      let tableError = false;
+      const rows = [...tbody.querySelectorAll('tr')];
+      const requiredCols = [0, 1, 2, 3, 4];
 
-        if (allEmpty) { tr.remove(); return; }
-        if (someEmpty){ error = true; tr.classList.add('table-danger'); return; }
+      rows.forEach((tr, rowIndex) => {
+        const tds = tr.querySelectorAll('td');
+        const getVal = i => tds[i]?.querySelector('input')?.value.trim() || '';
+        const getEl  = i => tds[i]?.querySelector('input');
 
-        const [info_source, purchase_dept, purchase_date, purchase_price, model, notes] =
-              inputs.map(i => i.value.trim());
-        items.push({ info_source, purchase_dept, purchase_date, purchase_price, model, notes });
+        const values = requiredCols.map(getVal);
+        const inputs = requiredCols.map(getEl);
+        const allEmpty = values.every(v => v === '');
+        const someEmpty = values.some(v => v === '');
+
+        // 清除旧样式
+        inputs.forEach(el => el?.classList.remove('is-invalid'));
+
+        // 处理错误情况
+        if (someEmpty && !allEmpty) {
+          inputs.forEach((el, i) => {
+            if (!values[i]) el.classList.add('is-invalid');
+          });
+          tableError = true;
+          return;
+        }
+
+        if (allEmpty) {
+          // 如果所有行中只有这一行，且它是空的 => 必须填，否则不能提交
+          if (rows.length === 1) {
+            inputs.forEach(el => el?.classList.add('is-invalid'));
+            tableError = true;
+          }
+          return; // 忽略空行
+        }
+
+        // 有效行
+        items.push({
+          info_source: getVal(0),
+          purchase_dept: getVal(1),
+          purchase_date: getVal(2),
+          purchase_price: getVal(3),
+          model: getVal(4),
+          notes: getVal(5),
+        });
       });
 
-      if (error) { alert('⚠️  红色行尚未填写完整，请补全！'); return null; }
-
-      const fd  = new FormData(form);
-      const obj = Object.fromEntries(fd);
+      // if (tableError || items.length === 0) return null;
+      if (hasMissing || tableError || items.length === 0) return null;
 
       const totalRaw = Number(obj.unit_price) * Number(obj.quantity || 0);
       obj.total_price     = numStr(totalRaw);
@@ -193,8 +252,20 @@
       return obj;
     }
 
+
     /* ===== 构造导出 HTML ===== */
     function buildHTML(d) {
+      const hasNotes = d.items.some(r => r.notes && r.notes.trim() !== '');
+
+      const headerCells = `
+        <th>信息来源渠道</th>
+        <th>采购部门</th>
+        <th>采购时间</th>
+        <th>采购价格</th>
+        <th>设备型号</th>
+        ${hasNotes ? '<th>备注</th>' : ''}
+      `;
+
       const rows = d.items.map(r => `
         <tr>
           <td>${r.info_source}</td>
@@ -202,8 +273,9 @@
           <td>${r.purchase_date}</td>
           <td>${numStr(r.purchase_price)}</td>
           <td>${r.model}</td>
-          <td>${r.notes}</td>
-        </tr>`).join('');
+          ${hasNotes ? `<td>${r.notes || ''}</td>` : ''}
+        </tr>
+      `).join('');
 
       return `
         <h2 style="text-align:center;">限高价复核情况表</h2>
@@ -215,25 +287,16 @@
         <p>五、招标采购办公室复核情况：</p>
 
         <table class="word-table">
-          <thead>
-            <tr>
-              <th>信息来源渠道</th>
-              <th>采购部门</th>
-              <th>采购时间</th>
-              <th>采购价格</th>
-              <th>设备型号</th>
-              <th>备注</th>
-            </tr>
-          </thead>
+          <thead><tr>${headerCells}</tr></thead>
           <tbody>${rows}</tbody>
         </table>
 
         <p style="margin-top:1rem;">招标采购办公室意见：经调研该项目市场成交价对比使用部门及资产管理部价格调研情况，建议以资产管理部调研结果采购。</p>
-
         <p style="margin-top:1.5rem;">复核人：${d.reviewer}</p>
         <p>时间：${d.date_show}</p>
       `;
     }
+
 
     /* ===== 预览 ===== */
     let lastHtml = '';
@@ -263,6 +326,17 @@
       const blob = window.htmlDocx.asBlob(fullHtml);
       saveAs(blob, '限高价复核情况表.docx');
     };
+
+    // 必填的填完后，自动清除标红框
+    document.querySelectorAll('#dataForm input, #dataForm select').forEach(el => {
+      el.addEventListener('input', () => el.classList.remove('is-invalid'));
+    });
+    tbody.addEventListener('input', e => {
+      if (e.target.tagName === 'INPUT') {
+        e.target.classList.remove('is-invalid');
+      }
+    });
+
   </script>
 </body>
 </html>
