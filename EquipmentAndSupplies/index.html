@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>我的导航</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #f0f4f8;
+      color: #333;
+    }
+
+    header {
+      background-color: #0077cc;
+      padding: 1rem;
+      color: white;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card a {
+      text-decoration: none;
+      color: #0077cc;
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+
+    .card img {
+      width: 40px;
+      height: 40px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    阳光采购常用导航 🔗
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <img src="https://www.google.com/favicon.ico" alt="Google">
+      <a href="https://biddingandprocurement.github.io/EquipmentAndSupplies/transparentInquiry.html" target="_blank">调研：限价复核</a>
+    </div>
+    <div class="card">
+      <img src="https://github.com/favicon.ico" alt="GitHub">
+      <a href="https://biddingandprocurement.github.io/EquipmentAndSupplies/meetingTopics.html" target="_blank">议题：限价复核（开发中...暂时无法使用...）</a>
+    </div>
+    <div class="card">
+      <img src="https://www.bilibili.com/favicon.ico" alt="Bilibili">
+      <a href="https://www.bilibili.com" target="_blank">哔哩哔哩</a>
+    </div>
+    <div class="card">
+      <img src="https://developer.mozilla.org/favicon.ico" alt="MDN">
+      <a href="https://developer.mozilla.org/zh-CN/" target="_blank">MDN 文档</a>
+    </div>
+  </div>
+</body>
+</html>
