@@ -20,9 +20,33 @@
   <!-- ====== 1. 输入表单 ====== -->
   <form id="dataForm" class="vstack gap-3">
 
+
     <div class="row g-3">
       <div class="col-sm-3">
-        <label class="form-label">资产管理部申购流水号</label>
+        <label for="centralizedManagementDepartment" class="form-label">归口管理部门</label>
+        <select id="centralizedManagementDepartment" name="centralizedManagementDepartment" class="form-select" required>
+          <option value="" disabled selected>请选择归口管理部门</option>
+          <option value="资产管理部">资产管理部</option>
+          <option value="信息中心">信息中心</option>
+          <option value="后勤保障部">后勤保障部</option>
+          <option value="党委宣传部">党委宣传部</option>
+          <option value="院务部">院务部</option>
+          <option value="肿瘤防治办公室">肿瘤防治办公室</option>
+          <option value="医学教育部">医学教育部</option>
+          <option value="工会">工会</option>
+          <option value="安全保卫部">安全保卫部</option>
+          <option value="护理部">护理部</option>
+          <option value="医务部">医务部</option>
+          <option value="离退休办公室">离退休办公室</option>
+          <option value="科研部">科研部</option>
+          <option value=""></option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-sm-3">
+        <label class="form-label">需求书申购流水号</label>
         <input name="serialNumber" class="form-control" required>
       </div>
     </div>
@@ -81,9 +105,9 @@
         <thead class="table-light text-center">
           <tr>
             <th style="width:18%">信息来源渠道</th>
-            <th style="width:16%">采购部门</th>
+            <th style="width:16%">采购单位</th>
             <th style="width:16%">采购时间</th>
-            <th style="width:16%">采购价格(万元)</th>
+            <th style="width:16%">采购单价(万元)</th>
             <th style="width:16%">设备型号</th>
             <th style="width:16%">备注</th>
             <th style="width:2%"></th>
@@ -167,7 +191,8 @@
       const obj = Object.fromEntries(fd);
 
       const requiredFields = {
-        'serialNumber': '资产管理部申购流水号',
+        'centralizedManagementDepartment': '归口管理部门',
+        'serialNumber': '需求书申购流水号',
         'hospital': '申购院区',
         'department': '申购科室',
         'procurementItem': '采购项目',
@@ -259,9 +284,9 @@
 
       const headerCells = `
         <th>信息来源渠道</th>
-        <th>采购部门</th>
+        <th>采购单位</th>
         <th>采购时间</th>
-        <th>采购价格</th>
+        <th>采购单价</th>
         <th>设备型号</th>
         ${hasNotes ? '<th>备注</th>' : ''}
       `;
@@ -279,11 +304,11 @@
 
       return `
         <h2 style="text-align:center;">限高价复核情况表</h2>
-        <p>一、资产管理部申购流水号：${d.serialNumber}</p>
+        <p>一、需求书申购流水号：${d.serialNumber}</p>
         <p>二、申购院区：${d.hospital}</p>
         <p>三、申购科室：${d.department}</p>
         <p>四、采购项目：${d.procurementItem}</p>
-        <p>资产管理部建议最高限价：${d.unit_price_show} 万元/${d.subject_unit}，${d.quantity}${d.subject_unit}，共计：${d.total_price} 万元</p>
+        <p>${d.centralizedManagementDepartment}建议最高限价：${d.unit_price_show} 万元/${d.subject_unit}，${d.quantity}${d.subject_unit}，共计：${d.total_price} 万元</p>
         <p>五、招标采购办公室复核情况：</p>
 
         <table class="word-table">
@@ -291,7 +316,7 @@
           <tbody>${rows}</tbody>
         </table>
 
-        <p style="margin-top:1rem;">招标采购办公室意见：经调研该项目市场成交价对比使用部门及资产管理部价格调研情况，建议以资产管理部调研结果采购。</p>
+        <p style="margin-top:1rem;">招标采购办公室意见：经调研该项目市场成交价对比使用部门及${d.centralizedManagementDepartment}价格调研情况，建议以${d.centralizedManagementDepartment}调研结果采购。</p>
         <p style="margin-top:1.5rem;">复核人：${d.reviewer}</p>
         <p>时间：${d.date_show}</p>
       `;
