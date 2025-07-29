@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <title>限高价复核情况表</title>
+  <title>议题：限高价复核</title>
   <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"> -->
   <!-- <link rel="stylesheet" href="https://raw.githubusercontent.com/biddingandprocurement/resources/main/style/bootstrap.min.css"> -->
   <link rel="stylesheet" href="./bootstrap.min.css">
@@ -17,7 +17,7 @@
   </style>
 </head>
 <body>
-  <h1 class="mb-4">限高价复核情况表</h1>
+  <h1 class="mb-4">议题：限高价复核</h1>
 
   <!-- ====== 1. 输入表单 ====== -->
   <form id="dataForm" class="vstack gap-3">
@@ -27,7 +27,7 @@
       <div class="col-sm-3">
         <label for="centralizedManagementDepartment" class="form-label">归口管理部门</label>
         <select id="centralizedManagementDepartment" name="centralizedManagementDepartment" class="form-select" required>
-          <option value="" disabled selected>请选择归口管理部门</option>
+          <!-- <option value="" disabled selected>请选择归口管理部门</option> -->
           <option value="资产管理部">资产管理部</option>
           <option value="信息中心">信息中心</option>
           <option value="后勤保障部">后勤保障部</option>
@@ -67,13 +67,14 @@
         <table class="table table-bordered align-middle" id="itemsTable">
           <thead class="table-light text-center">
             <tr>
-              <th style="width:14%">科室</th>
+              <th style="width:10%">科室</th>
               <th style="width:16%">项目名称</th>
-              <th style="width:16%">限高单价(万元)</th>
-              <th style="width:14%">数量(单位)</th>
-              <th style="width:14%">单位</th>
-              <th style="width:14%">总价(万元)</th>   <!-- 自动计算总价 -->
-              <th style="width:16%">备注</th>
+              <th style="width:8%">单价(万元)</th>
+              <th style="width:8%">数量(单位)</th>
+              <th style="width:8%">单位</th>
+              <th style="width:10%">总价(万元)</th>   <!-- 自动计算总价 -->
+              <th style="width:14%">采购方式</th>
+              <th style="width:14%">备注</th>
               <th style="width:2%"></th>
             </tr>
           </thead>
@@ -137,6 +138,17 @@
         <td><input type="number" step="any" class="form-control quantity-input" required value="${data.quantity || ''}"></td>
         <td><input class="form-control" required value="${data.model || ''}"></td>
         <td><input class="form-control total-output" readonly></td>
+        <td>
+          <select class="form-select" required>
+            <option value="院内评审">院内评审</option>
+            <option value="公开招标">公开招标</option>
+            <option value="邀请招标">邀请招标</option>
+            <option value="竞争性谈判">竞争性谈判</option>
+            <option value="单一来源">单一来源</option>
+            <option value="询价">询价</option>
+            <option value="其他方式">其他方式</option>
+          </select>
+        </td>
         <td><input class="form-control" value="${data.notes || ''}"></td>
         <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger">✖</button></td>`;
       tr.querySelector('button').onclick = () => tr.remove();
@@ -187,11 +199,16 @@
       const items = [];
       let tableError = false;
       const rows = [...tbody.querySelectorAll('tr')];
-      const requiredCols = [0, 1, 2, 3, 4];
+      const requiredCols = [0, 1, 2, 3, 4, 6];
 
       rows.forEach((tr, rowIndex) => {
         const tds = tr.querySelectorAll('td');
-        const getVal = i => tds[i]?.querySelector('input')?.value.trim() || '';
+        // const getVal = i => tds[i]?.querySelector('input')?.value.trim() || '';
+        const getVal = i => {
+          const el = tds[i]?.querySelector('input, select');
+          return el?.value?.trim() || '';
+        };
+
         const getEl  = i => tds[i]?.querySelector('input');
 
         const values = requiredCols.map(getVal);
@@ -228,7 +245,8 @@
           quantity: getVal(3),
           model: getVal(4),
           total: getVal(5),  // 总价（只读）自动计算总价
-          notes: getVal(6),
+          purchase_method: getVal(6),
+          notes: getVal(7),
         });
       });
 
@@ -256,6 +274,7 @@
         <th>数量（单位）</th>
         <th>单位</th>
         <th>总价（万元）</th> 
+        <th>采购方式</th> 
         ${hasNotes ? '<th>备注</th>' : ''}
       `;
 
@@ -267,6 +286,7 @@
           <td>${numStr(r.quantity)}</td>
           <td>${r.model}</td>
           <td>${numStr(r.total)}</td>
+          <td>${r.purchase_method}</td>
           ${hasNotes ? `<td>${r.notes || ''}</td>` : ''}
         </tr>
       `).join('');
@@ -286,7 +306,7 @@
 
       // `;
 
-      const projectList = d.items.map(r => `${r.info_source}${r.purchase_dept}`).join('，');
+      const projectList = d.items.map(r => `${r.info_source}${r.purchase_dept}`).join('、');
 
       const uniqueDepts = [...new Set(d.items.map(r => r.info_source))];
       const deptList = uniqueDepts.length > 1
@@ -294,30 +314,30 @@
         : uniqueDepts[0];
 
       const suggestionList = d.items.map(r => {
-        return `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${r.purchase_dept}以最高限价人民币${numStr(r.purchase_price)} 万元/${r.model}，${r.quantity}${r.model}，共计：${numStr(r.total)}万元进行采购。`;
+        return `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${r.purchase_dept}以最高限价人民币${numStr(r.purchase_price)} 万元/${r.model}，${r.quantity}${r.model}，共计：${(r.total)}万元，通过${r.purchase_method}方式进行采购。`;
       }).join('<br>');
 
-      const totalQuantity = d.items.reduce((sum, r) => sum + Number(r.quantity || 0), 0);
-      const totalBudget   = d.items.reduce((sum, r) => sum + Number(r.total || 0), 0);
+      const totalQuantity = d.items.reduce((sum, r) => sum + Number(r.quantity || 0), 0); // 总台数
+      const totalBudget   = d.items.reduce((sum, r) => sum + Number(r.total || 0), 0); // 总价之和，总预算
 
       return `
         <h2 style="text-align:center;">关于招采${d.hospital}${projectList}的请示</h2>
 
         <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;招标采购办公室收到${d.centralizedManagementDepartment}转办的${d.hospital}${projectList}采购需求书（详见附件1），该项目已通过资产管理委员会论证，已报入年度预算。</p>
-        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${d.centralizedManagementDepartment}分别与${deptList}完成了需求调查及价格调研工作，招标采购办公室于${d.date_show}对${d.centralizedManagementDepartment}所提交材料及最高限价（详见附件2）开展详细复核。经集体研判，该项目已达到招标采购的条件。建议采购限价如下：</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${d.centralizedManagementDepartment}分别与${deptList}完成了需求调查及价格调研工作，招标采购办公室于${d.date_show}对${d.centralizedManagementDepartment}所提交材料及最高限价（详见附件2）开展详细复核。经集体研判，该项目已达到招标采购的条件。建议采购限价及采购方式如下：</p>
 
         <p>${suggestionList}</p>
 
-        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;本次采购共计${totalQuantity}台，总预算${numStr(totalBudget)}万元。建议通过院内评审方式分别进行采购，从2025年医学装备类年度预算中支出。</p>
+        <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;本次采购项目共${d.items.length}项，总预算${numStr(totalBudget)}万元，从2025年医学装备类年度预算中支出。</p>
         <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;妥否，提请领导审议！</p>
 
-        <table class="word-table">
-          <thead><tr>${headerCells}</tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
       `;
 
     }
+    // <table class="word-table">
+    //   <thead><tr>${headerCells}</tr></thead>
+    //   <tbody>${rows}</tbody>
+    // </table>
 
 
     /* ===== 预览 ===== */
