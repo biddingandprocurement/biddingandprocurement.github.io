@@ -13519,7 +13519,7 @@
         <th>信息来源渠道</th>
         <th>采购单位</th>
         <th>采购时间</th>
-        <th>采购单价</th>
+        <th>采购单价（万元）</th>
         <th>设备型号</th>
         ${hasNotes ? '<th>备注</th>' : ''}
       `;
@@ -13535,13 +13535,14 @@
         </tr>
       `).join('');
 
+        // <p>${d.centralizedManagementDepartment}建议最高限价：${d.unit_price_show} 万元/${d.subject_unit}，${d.quantity}${d.subject_unit}，共计：${d.total_price} 万元</p>
       return `
         <h2 style="text-align:center;">限高价复核情况表</h2>
         <p>一、需求书申购流水号：${d.serialNumber}</p>
         <p>二、申购院区：${d.hospital}</p>
         <p>三、申购科室：${d.department}</p>
         <p>四、采购项目：${d.procurementItem}</p>
-        <p>${d.centralizedManagementDepartment}建议最高限价：${d.unit_price_show} 万元/${d.subject_unit}，${d.quantity}${d.subject_unit}，共计：${d.total_price} 万元</p>
+        <p>${d.centralizedManagementDepartment}建议最高限价：${d.unit_price_show} 万元/${d.subject_unit}</p>
         <p>五、招标采购办公室复核情况：</p>
 
         <table class="word-table">
