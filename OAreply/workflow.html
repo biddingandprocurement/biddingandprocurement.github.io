@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>我的导航</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #f0f4f8;
+      color: #333;
+    }
+
+    header {
+      background-color: #0077cc;
+      padding: 1rem;
+      color: white;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(800px, 1fr));
+      gap: 20px;
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      /* text-align: center; */
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card a {
+      text-decoration: none;
+      color: #0077cc;
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+
+    .card img {
+      width: 40px;
+      height: 40px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    工作流
+  </header>
+
+  <div class="container">
+    <div class="card">
+        <h3>一、采购项目需求书</h3>
+        <h4>招标采购办公室</h4>
+        <h4>经办人意见：</h4>
+        <p></p>
+        <p>1.已复核，建议通过供货协议下单。</p>
+        <p>2.已复核，建议通过询价采购方式进行采购。（仅限1W以内，才能使用这一行回复）</p>
+        <p>3.已复核，建议通过院内评审方式进行采购，并签订供货协议。</p>
+        <p>4.已复核，建议通过院内评审方式进行采购。</p>
+    </div>
+
+    <div class="card">
+        <h4>招标采购办公室</h4>
+        <h4>执行采购:</h4>
+        <p>1.已通过供货协议下单。</p>
+        <p>2.已完成采购，中标单位为：XXXXX，中标金额为：XXX。</p>
+        <p>3.经与使用部门沟通，科室放弃购置/暂不购置。</p>
+        <p>4.该项目已于XX年XX月XX日开标，经评审小组综合评判，投标单位所投产品均不满足采购需求，废标。科室将重新提交购置申请至归口管理部门。</p>
+        <p></p>
+
+    </div>
+
+    <div class="card">
+        <h3>二、经济合同会签单：</h3>
+        <p>1.根据XX院区XX科提交购置XXXXXX的申请及院领导同意购置的批示，招标采购办公室按照相关规定进行院内评审，中标单位为：XXXXX，中标价：XXXX万元/台,XX台共计XX万元；质保期:XX年。</p>
+        <p>2.根据XX院区XX科提交购置XXXXXX的申请及院领导同意购置的批示，招标采购办公室按照相关规定进行院内评审，中标单位为：XXXXX，中标价：XXXX万元/台,XX台共计XX万元；质保期:XX年。签订供货协议，协议期：XX年。（一般通用物资类协议期三年，其他1年）</p>
+        <p></p>
+        <p></p>
+        
+        
+        
+    </div>
+
+    <div class="card">
+        <p></p>
+        <p></p>
+    </div>
+  </div>
+</body>
+</html>
